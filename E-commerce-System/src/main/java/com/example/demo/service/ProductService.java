@@ -13,6 +13,18 @@ public class ProductService {
     @Autowired
     private ProductRepository repo;
 
+    public Product update(Long id, Product p) {
+        Product existing = repo.findById(id).orElseThrow();
+
+        existing.setName(p.getName());
+        existing.setPrice(p.getPrice());
+        existing.setDescription(p.getDescription());
+        existing.setStock(p.getStock());
+        existing.setImageUrl(p.getImageUrl());
+
+        return repo.save(existing);
+    }
+    
     public Product save(Product p) {
         return repo.save(p);
     }

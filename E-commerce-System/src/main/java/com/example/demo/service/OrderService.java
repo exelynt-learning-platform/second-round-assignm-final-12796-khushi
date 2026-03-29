@@ -15,7 +15,9 @@ public class OrderService {
     @Autowired private OrderRepository orderRepo;
     @Autowired private CartRepository cartRepo;
     @Autowired private UserRepository userRepo;
+    @Autowired private ProductRepository productRepo; // ✅ ADD
 
+    // ✅ PLACE ORDER
     public Order placeOrder(String username) {
 
         User user = userRepo.findByUsername(username);
@@ -31,25 +33,46 @@ public class OrderService {
         double total = 0;
 
         for (CartItem item : cart.getItems()) {
+
+            Product product = item.getProduct();
+
+            // 🔥 1. STOCK VALIDATION
+            if (item.getProduct().getStock() < item.getQuantity()) {
+                throw new RuntimeException("Out of stock");
+            }
+            // 🔥 2. REDUCE STOCK
+            product.setStock(product.getStock() - item.getQuantity());
+            productRepo.save(product);
+
             OrderItem oi = new OrderItem();
-
-            oi.setProduct(item.getProduct());
+            oi.setProduct(product);
             oi.setQuantity(item.getQuantity());
-            oi.setPrice(item.getProduct().getPrice());
+            oi.setPrice(product.getPrice());
 
-            oi.setOrder(order);   // 🔥 MUST ADD THIS
+            oi.setOrder(order); // ✅ IMPORTANT
 
             total += oi.getPrice() * oi.getQuantity();
+
             order.getItems().add(oi);
         }
 
         order.setTotalPrice(total);
         order.setStatus("PENDING");
 
-        return orderRepo.save(order);
+        Order savedOrder = orderRepo.save(order);
+
+        // 🔥 3. CLEAR CART AFTER ORDER
+        cart.getItems().clear();
+        cartRepo.save(cart);
+
+        return savedOrder;
     }
 
-	public List<Order> getAllOrders() {
-    return orderRepo.findAll();
-}
+    // ❌ OLD METHOD (NOT SAFE)
+    // public List<Order> getAllOrders()
+
+    // ✅ FIXED: USER-SPECIFIC ORDERS
+    public List<Order> getOrdersByUser(String username) {
+        return orderRepo.findByUserUsername(username);
+    }
 }
