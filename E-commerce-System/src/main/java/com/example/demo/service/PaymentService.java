@@ -15,21 +15,18 @@ public class PaymentService {
     @Autowired private PaymentRepository paymentRepo;
     @Autowired private OrderRepository orderRepo;
 
-    // ✅ SAFE PAYMENT METHOD
+    // ✅ MAIN LOGIC
     @Transactional
     public Payment processPayment(Order order, String method) {
 
-        // ✅ VALIDATION
         if (order == null) {
             throw new RuntimeException("Invalid order");
         }
 
-        if (order.getTotalPrice() <= 0) {
-            throw new RuntimeException("Invalid payment amount");
-        }
-
-        if (method == null || method.isEmpty()) {
-            throw new RuntimeException("Payment method required");
+        // ✅ prevent duplicate payment
+        Payment existing = paymentRepo.findByOrder(order);
+        if (existing != null) {
+            return existing;
         }
 
         Payment payment = new Payment();
@@ -37,14 +34,12 @@ public class PaymentService {
         payment.setAmount(order.getTotalPrice());
         payment.setPaymentMethod(method);
         payment.setPaymentDate(LocalDateTime.now());
-
-        // ✅ Simulate success
         payment.setStatus("SUCCESS");
 
         return paymentRepo.save(payment);
     }
 
-    // ✅ OPTIONAL: KEEP THIS ONLY IF CONTROLLER USES IT
+    // ✅ THIS METHOD IS REQUIRED (FIX YOUR ERROR)
     public Payment makePayment(Long orderId, String method) {
 
         Order order = orderRepo.findById(orderId)

@@ -3,7 +3,9 @@ package com.example.demo.controller;
 import java.security.Principal;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.demo.entity.Cart;
 import com.example.demo.service.CartService;
@@ -21,9 +23,10 @@ public class CartController {
                           @RequestParam int quantity,
                           Principal principal) {
 
-        // ✅ FIX: check principal
         if (principal == null) {
-            throw new RuntimeException("User not authenticated");
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED, "User not authenticated"
+            );
         }
 
         return service.addToCart(principal.getName(), productId, quantity);
@@ -33,9 +36,10 @@ public class CartController {
     @GetMapping
     public Cart getCart(Principal principal) {
 
-        // ✅ FIX: check principal
         if (principal == null) {
-            throw new RuntimeException("User not authenticated");
+            throw new ResponseStatusException(
+                HttpStatus.UNAUTHORIZED, "User not authenticated"
+            );
         }
 
         return service.getCartByUsername(principal.getName());
