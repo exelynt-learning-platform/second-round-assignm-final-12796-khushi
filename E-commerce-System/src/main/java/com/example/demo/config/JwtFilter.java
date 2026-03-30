@@ -3,6 +3,9 @@ package com.example.demo.config;
 
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.util.List;
+
+import com.example.demo.entity.User;
+import com.example.demo.repository.UserRepository;
 import com.example.demo.util.JwtUtil;
 import jakarta.servlet.*;
 import jakarta.servlet.http.*;
@@ -18,6 +21,9 @@ import java.util.Collections;
 
 @Component
 public class JwtFilter extends OncePerRequestFilter {
+	
+	@Autowired
+	private UserRepository userRepo;
 
     @Autowired
     private JwtUtil jwtUtil;
@@ -36,18 +42,30 @@ public class JwtFilter extends OncePerRequestFilter {
 
             if (jwtUtil.validateToken(token)) {
 
+                // ✅ 1. Extract username from token
                 String username = jwtUtil.extractUsername(token);
 
+                // ✅ 2. Fetch user from DB
+                User user = userRepo.findByUsername(username);
+
+                // ✅ 3. Get role safely
+                String role = (user != null) ? user.getRole() : null;
+
+                if (role == null || role.isEmpty()) {
+                    role = "ROLE_USER";  // fallback
+                }
+
+                // ✅ 4. Set authentication
                 UsernamePasswordAuthenticationToken auth =
                         new UsernamePasswordAuthenticationToken(
                                 username,
                                 null,
-                                List.of(new SimpleGrantedAuthority("ROLE_USER"))
+                                List.of(new SimpleGrantedAuthority(role))
                         );
 
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request)); // ✅ ADD THIS
+                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContextHolder.getContext().setAuthentication(auth); // ✅ already correct
+                SecurityContextHolder.getContext().setAuthentication(auth);
             }
         }
 

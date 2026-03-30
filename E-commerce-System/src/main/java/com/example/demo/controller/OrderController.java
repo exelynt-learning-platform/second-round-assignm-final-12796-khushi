@@ -27,7 +27,8 @@ public class OrderController {
     }
     
     @GetMapping
-    public List<Order> getAllOrders() {
-        return service.getAllOrders();
+    public List<Order> getOrders(Principal principal) {
+        String username = principal.getName();
+        return service.getOrdersByUser(username);
     }
 }
