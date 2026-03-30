@@ -17,14 +17,8 @@ public class CartService {
     @Autowired
     private ProductRepository productRepo;
 
-    // ✅ ADD TO CART (FULL FIX)
-    public Cart addToCart(String username, Long productId, int qty) {
-
-        // ✅ USER VALIDATION
-        User user = userRepo.findByUsername(username);
-        if (user == null) {
-            throw new RuntimeException("User not found");
-        }
+    // ✅ COMMON METHOD (NEW)
+    private Cart getOrCreateCart(User user) {
 
         Cart cart = cartRepo.findByUser(user);
 
@@ -33,12 +27,26 @@ public class CartService {
             cart = new Cart();
             cart.setUser(user);
             cart.setItems(new ArrayList<>());
-            cart = cartRepo.save(cart);
+            return cartRepo.save(cart);
         }
 
         if (cart.getItems() == null) {
             cart.setItems(new ArrayList<>());
         }
+
+        return cart;
+    }
+
+    // ✅ ADD TO CART
+    public Cart addToCart(String username, Long productId, int qty) {
+
+        User user = userRepo.findByUsername(username);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        // ✅ USE COMMON METHOD
+        Cart cart = getOrCreateCart(user);
 
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
@@ -70,7 +78,7 @@ public class CartService {
         return cartRepo.save(cart);
     }
 
-    // ✅ ADD THIS METHOD (MISSING)
+    // ✅ GET CART
     public Cart getCartByUsername(String username) {
 
         User user = userRepo.findByUsername(username);
@@ -79,19 +87,7 @@ public class CartService {
             throw new RuntimeException("User not found");
         }
 
-        Cart cart = cartRepo.findByUser(user);
-
-        if (cart == null) {
-            cart = new Cart();
-            cart.setUser(user);
-            cart.setItems(new ArrayList<>());
-            return cartRepo.save(cart);
-        }
-
-        if (cart.getItems() == null) {
-            cart.setItems(new ArrayList<>());
-        }
-
-        return cart;
+        // ✅ REUSE METHOD
+        return getOrCreateCart(user);
     }
 }

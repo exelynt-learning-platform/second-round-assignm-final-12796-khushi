@@ -7,7 +7,6 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.http.HttpStatus;
 
 import jakarta.servlet.http.HttpServletResponse;
 
@@ -22,33 +21,44 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // ✅ Password Encoder
     @Bean
     public BCryptPasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();
     }
 
-    // ✅ Security Configuration
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-            // ✅ Disable CSRF (for REST APIs)
             .csrf(csrf -> csrf.disable())
 
-            // ✅ Stateless session (IMPORTANT for JWT)
-            .sessionManagement(session -> 
+            .sessionManagement(session ->
                 session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
             )
 
-            // ✅ Authorization rules
             .authorizeHttpRequests(auth -> auth
-                    .requestMatchers("/auth/**").permitAll()   // login/register
-                    .requestMatchers("/products/**").permitAll() // allow product view
-                    .anyRequest().authenticated()              // secure others
+
+                // ✅ PUBLIC
+                .requestMatchers("/auth/**").permitAll()
+
+                // ✅ PRODUCTS (VIEW ONLY PUBLIC)
+                .requestMatchers("/products").permitAll()
+                .requestMatchers("/products/{id}").permitAll()
+
+                // ✅ ADMIN ONLY (CRITICAL FIX)
+                .requestMatchers("/products/add").hasRole("ADMIN")
+                .requestMatchers("/products/update/**").hasRole("ADMIN")
+                .requestMatchers("/products/delete/**").hasRole("ADMIN")
+
+                // ✅ USER APIs
+                .requestMatchers("/cart/**").authenticated()
+                .requestMatchers("/orders/**").authenticated()
+                .requestMatchers("/payments/**").authenticated()
+
+                // ✅ DEFAULT
+                .anyRequest().authenticated()
             )
 
-            // ✅ Handle unauthorized access (IMPORTANT)
             .exceptionHandling(ex -> ex
                 .authenticationEntryPoint((req, res, excep) -> {
                     res.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
@@ -56,7 +66,6 @@ public class SecurityConfig {
                 })
             )
 
-            // ✅ Add JWT filter
             .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

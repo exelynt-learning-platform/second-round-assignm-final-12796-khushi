@@ -36,20 +36,14 @@ public class OrderService {
 
         Order order = new Order();
         order.setUser(user);
-
-        // ✅ FIX: ensure order items initialized
-        if (order.getItems() == null) {
-            order.setItems(new ArrayList<>());
-        }
+        order.setItems(new ArrayList<>());
 
         double total = 0;
 
+        // ✅ PREPARE ORDER (NO STOCK CHANGE YET)
         for (CartItem item : cart.getItems()) {
 
-            // ✅ FIX: item null check
-            if (item == null) {
-                continue;
-            }
+            if (item == null) continue;
 
             Product product = item.getProduct();
 
@@ -65,11 +59,6 @@ public class OrderService {
                 throw new RuntimeException("Out of stock: " + product.getName());
             }
 
-            // ✅ REDUCE STOCK
-            product.setStock(product.getStock() - item.getQuantity());
-            productRepo.save(product);
-
-            // ✅ CREATE ORDER ITEM
             OrderItem oi = new OrderItem();
             oi.setProduct(product);
             oi.setQuantity(item.getQuantity());
@@ -77,24 +66,30 @@ public class OrderService {
             oi.setOrder(order);
 
             total += oi.getPrice() * oi.getQuantity();
-
             order.getItems().add(oi);
         }
 
         order.setTotalPrice(total);
 
-        // ✅ SAVE ORDER
+        // ✅ SAVE ORDER FIRST
         Order savedOrder = orderRepo.save(order);
 
-        // ✅ PAYMENT (SAFE CHECK)
+        // ✅ PROCESS PAYMENT
         Payment payment = paymentService.processPayment(savedOrder, "UPI");
 
         if (payment == null || !"SUCCESS".equals(payment.getStatus())) {
             throw new RuntimeException("Payment failed");
         }
 
+        // ✅ REDUCE STOCK AFTER PAYMENT SUCCESS
+        for (CartItem item : cart.getItems()) {
+            Product product = item.getProduct();
+            product.setStock(product.getStock() - item.getQuantity());
+            productRepo.save(product);
+        }
+
+        // ✅ UPDATE STATUS (NO EXTRA SAVE NEEDED)
         savedOrder.setStatus("PAID");
-        orderRepo.save(savedOrder);
 
         // ✅ CLEAR CART
         cart.getItems().clear();
@@ -103,7 +98,7 @@ public class OrderService {
         return savedOrder;
     }
 
-    // ✅ FIX: user validation added
+    // ✅ GET USER ORDERS
     public List<Order> getOrdersByUser(String username) {
 
         User user = userRepo.findByUsername(username);
