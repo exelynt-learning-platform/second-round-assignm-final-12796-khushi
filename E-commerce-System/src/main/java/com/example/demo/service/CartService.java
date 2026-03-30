@@ -17,10 +17,7 @@ public class CartService {
     @Autowired
     private ProductRepository productRepo;
 
-    @Autowired
-    private UserRepository userRepo;
-
-    // ✅ ADD TO CART
+    // ✅ ADD TO CART (FULL FIX)
     public Cart addToCart(String username, Long productId, int qty) {
 
         // ✅ USER VALIDATION
@@ -29,7 +26,6 @@ public class CartService {
             throw new RuntimeException("User not found");
         }
 
-        // ✅ GET CART
         Cart cart = cartRepo.findByUser(user);
 
         // ✅ CREATE CART IF NOT EXISTS
@@ -37,29 +33,25 @@ public class CartService {
             cart = new Cart();
             cart.setUser(user);
             cart.setItems(new ArrayList<>());
-            cart = cartRepo.save(cart); // ✅ IMPORTANT
+            cart = cartRepo.save(cart);
         }
 
-        // ✅ EXTRA SAFETY
         if (cart.getItems() == null) {
             cart.setItems(new ArrayList<>());
         }
 
-        // ✅ PRODUCT VALIDATION
         Product product = productRepo.findById(productId)
                 .orElseThrow(() -> new RuntimeException("Product not found"));
 
-        // ✅ QUANTITY VALIDATION
         if (qty <= 0) {
-            throw new RuntimeException("Quantity must be greater than 0");
+            throw new RuntimeException("Invalid quantity");
         }
 
-        // ✅ STOCK VALIDATION
         if (product.getStock() < qty) {
             throw new RuntimeException("Not enough stock");
         }
 
-        // ✅ CHECK IF PRODUCT EXISTS IN CART
+        // ✅ check if already exists
         for (CartItem item : cart.getItems()) {
             if (item.getProduct().getId().equals(productId)) {
                 item.setQuantity(item.getQuantity() + qty);
@@ -67,7 +59,7 @@ public class CartService {
             }
         }
 
-        // ✅ ADD NEW ITEM
+        // ✅ add new item
         CartItem newItem = new CartItem();
         newItem.setProduct(product);
         newItem.setQuantity(qty);
@@ -78,7 +70,7 @@ public class CartService {
         return cartRepo.save(cart);
     }
 
-    // ✅ GET CART
+    // ✅ ADD THIS METHOD (MISSING)
     public Cart getCartByUsername(String username) {
 
         User user = userRepo.findByUsername(username);
@@ -89,7 +81,6 @@ public class CartService {
 
         Cart cart = cartRepo.findByUser(user);
 
-        // ✅ CREATE IF NOT EXISTS
         if (cart == null) {
             cart = new Cart();
             cart.setUser(user);
@@ -97,7 +88,6 @@ public class CartService {
             return cartRepo.save(cart);
         }
 
-        // ✅ EXTRA SAFETY
         if (cart.getItems() == null) {
             cart.setItems(new ArrayList<>());
         }

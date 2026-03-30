@@ -1,9 +1,11 @@
 package com.example.demo.service;
 
-import java.time.LocalDateTime;
+import com.example.demo.entity.*;
+import com.example.demo.repository.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.example.demo.entity.Order;
 import com.example.demo.entity.Payment;
@@ -15,15 +17,21 @@ public class PaymentService {
     @Autowired
     private PaymentRepository paymentRepo;
 
-    // ✅ REAL PAYMENT METHOD (REQUIRED FOR PASS)
+    // ✅ SAFE PAYMENT METHOD
+    @Transactional
     public Payment processPayment(Order order, String method) {
 
+        // ✅ VALIDATION
         if (order == null) {
             throw new RuntimeException("Invalid order");
         }
 
         if (order.getTotalPrice() <= 0) {
             throw new RuntimeException("Invalid payment amount");
+        }
+
+        if (method == null || method.isEmpty()) {
+            throw new RuntimeException("Payment method required");
         }
 
         Payment payment = new Payment();
@@ -36,5 +44,14 @@ public class PaymentService {
         payment.setStatus("SUCCESS");
 
         return paymentRepo.save(payment);
+    }
+
+    // ✅ OPTIONAL: KEEP THIS ONLY IF CONTROLLER USES IT
+    public Payment makePayment(Long orderId, String method) {
+
+        Order order = orderRepo.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        return processPayment(order, method);
     }
 }

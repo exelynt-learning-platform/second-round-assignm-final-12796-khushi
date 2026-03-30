@@ -22,12 +22,23 @@ public class CartController {
                           @RequestParam int quantity,
                           Principal principal) {
 
+        // ✅ FIX: check principal
+        if (principal == null) {
+            throw new RuntimeException("User not authenticated");
+        }
+
         return service.addToCart(principal.getName(), productId, quantity);
     }
 
     // ✅ GET USER CART
     @GetMapping
     public Cart getCart(Principal principal) {
+
+        // ✅ FIX: check principal
+        if (principal == null) {
+            throw new RuntimeException("User not authenticated");
+        }
+
         return service.getCartByUsername(principal.getName());
     }
 }
