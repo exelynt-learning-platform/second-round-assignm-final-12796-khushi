@@ -11,15 +11,18 @@ import org.springframework.stereotype.Service;
 @Service
 public class CartService {
 
-    @Autowired private CartRepository cartRepo;
-    @Autowired private ProductRepository productRepo;
-    @Autowired private UserRepository userRepo;
+    @Autowired
+    private CartRepository cartRepo;
+
+    @Autowired
+    private ProductRepository productRepo;
 
     // ✅ COMMON METHOD (NEW)
     private Cart getOrCreateCart(User user) {
 
         Cart cart = cartRepo.findByUser(user);
 
+        // ✅ CREATE CART IF NOT EXISTS
         if (cart == null) {
             cart = new Cart();
             cart.setUser(user);
