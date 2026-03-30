@@ -7,13 +7,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import com.example.demo.entity.Order;
+import com.example.demo.entity.Payment;
+import com.example.demo.repository.PaymentRepository;
 
 @Service
 public class PaymentService {
 
-    @Autowired private PaymentRepository paymentRepo;
-    @Autowired private OrderRepository orderRepo;
+    @Autowired
+    private PaymentRepository paymentRepo;
 
     // ✅ SAFE PAYMENT METHOD
     @Transactional

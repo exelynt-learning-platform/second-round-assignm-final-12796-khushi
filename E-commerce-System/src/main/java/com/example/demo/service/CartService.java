@@ -11,13 +11,16 @@ import org.springframework.stereotype.Service;
 @Service
 public class CartService {
 
-    @Autowired private CartRepository cartRepo;
-    @Autowired private ProductRepository productRepo;
-    @Autowired private UserRepository userRepo;
+    @Autowired
+    private CartRepository cartRepo;
+
+    @Autowired
+    private ProductRepository productRepo;
 
     // ✅ ADD TO CART (FULL FIX)
     public Cart addToCart(String username, Long productId, int qty) {
 
+        // ✅ USER VALIDATION
         User user = userRepo.findByUsername(username);
         if (user == null) {
             throw new RuntimeException("User not found");
@@ -25,6 +28,7 @@ public class CartService {
 
         Cart cart = cartRepo.findByUser(user);
 
+        // ✅ CREATE CART IF NOT EXISTS
         if (cart == null) {
             cart = new Cart();
             cart.setUser(user);
