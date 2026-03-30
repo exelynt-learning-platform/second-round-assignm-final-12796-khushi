@@ -1,20 +1,17 @@
 package com.example.demo.entity;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.*;
 
 @Entity
 public class Cart {
-    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @OneToOne
@@ -22,33 +19,31 @@ public class Cart {
 
     @OneToMany(mappedBy = "cart", cascade = CascadeType.ALL)
     @JsonManagedReference
-    private List<CartItem> items;
+    private List<CartItem> items = new ArrayList<>(); // ✅ FIX (IMPORTANT)
 
-	public Long getId() {
-		return id;
-	}
+    // getters & setters
 
-	public void setId(Long id) {
-		this.id = id;
-	}
+    public Long getId() {
+        return id;
+    }
 
-	public User getUser() {
-		return user;
-	}
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-	public void setUser(User user) {
-		this.user = user;
-	}
+    public User getUser() {
+        return user;
+    }
 
-	public List<CartItem> getItems() {
-		return items;
-	}
+    public void setUser(User user) {
+        this.user = user;
+    }
 
-	public void setItems(List<CartItem> items) {
-		this.items = items;
-	}
+    public List<CartItem> getItems() {
+        return items;
+    }
 
-	
-    
-    
+    public void setItems(List<CartItem> items) {
+        this.items = items;
+    }
 }

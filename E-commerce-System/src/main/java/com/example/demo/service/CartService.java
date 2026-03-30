@@ -1,6 +1,5 @@
 package com.example.demo.service;
 
-
 import com.example.demo.entity.*;
 import com.example.demo.repository.*;
 
@@ -12,29 +11,55 @@ import org.springframework.stereotype.Service;
 @Service
 public class CartService {
 
-    @Autowired private CartRepository cartRepo;
-    @Autowired private ProductRepository productRepo;
-    @Autowired private UserRepository userRepo;
+    @Autowired
+    private CartRepository cartRepo;
 
+    @Autowired
+    private ProductRepository productRepo;
+
+    @Autowired
+    private UserRepository userRepo;
+
+    // ✅ ADD TO CART
     public Cart addToCart(String username, Long productId, int qty) {
 
+        // ✅ USER VALIDATION
         User user = userRepo.findByUsername(username);
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
+        // ✅ GET CART
         Cart cart = cartRepo.findByUser(user);
 
+        // ✅ CREATE CART IF NOT EXISTS
         if (cart == null) {
             cart = new Cart();
             cart.setUser(user);
-            cart.setItems(new ArrayList<>()); // ✅ IMPORTANT
+            cart.setItems(new ArrayList<>());
+            cart = cartRepo.save(cart); // ✅ IMPORTANT
         }
 
-        Product product = productRepo.findById(productId).orElseThrow();
+        // ✅ EXTRA SAFETY
+        if (cart.getItems() == null) {
+            cart.setItems(new ArrayList<>());
+        }
 
-        // 🔥 1. STOCK VALIDATION
+        // ✅ PRODUCT VALIDATION
+        Product product = productRepo.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+
+        // ✅ QUANTITY VALIDATION
+        if (qty <= 0) {
+            throw new RuntimeException("Quantity must be greater than 0");
+        }
+
+        // ✅ STOCK VALIDATION
         if (product.getStock() < qty) {
             throw new RuntimeException("Not enough stock");
         }
 
-        // 🔥 2. CHECK IF PRODUCT ALREADY EXISTS
+        // ✅ CHECK IF PRODUCT EXISTS IN CART
         for (CartItem item : cart.getItems()) {
             if (item.getProduct().getId().equals(productId)) {
                 item.setQuantity(item.getQuantity() + qty);
@@ -42,7 +67,7 @@ public class CartService {
             }
         }
 
-        // 🔥 3. CREATE NEW ITEM ONLY IF NOT EXISTS
+        // ✅ ADD NEW ITEM
         CartItem newItem = new CartItem();
         newItem.setProduct(product);
         newItem.setQuantity(qty);
@@ -53,19 +78,30 @@ public class CartService {
         return cartRepo.save(cart);
     }
 
+    // ✅ GET CART
     public Cart getCartByUsername(String username) {
 
         User user = userRepo.findByUsername(username);
+
+        if (user == null) {
+            throw new RuntimeException("User not found");
+        }
+
         Cart cart = cartRepo.findByUser(user);
 
+        // ✅ CREATE IF NOT EXISTS
         if (cart == null) {
             cart = new Cart();
             cart.setUser(user);
+            cart.setItems(new ArrayList<>());
             return cartRepo.save(cart);
+        }
+
+        // ✅ EXTRA SAFETY
+        if (cart.getItems() == null) {
+            cart.setItems(new ArrayList<>());
         }
 
         return cart;
     }
-
-	
 }
